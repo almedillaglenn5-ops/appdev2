@@ -1,21 +1,37 @@
-
 <?php
 require 'db.php';
+
 // INSERT DATA
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
     $course = $_POST['course'];
+
     $sql = "INSERT INTO students (name, email, course) VALUES (?, ?, ?)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$name, $email, $course]);
+
     header("Location: index.php");
     exit();
 }
-// FETCH DATA
-$stmt = $pdo->query("SELECT * FROM students");
+
+// 🔍 SEARCH FUNCTION (ADDED)
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+
+// FETCH DATA (MODIFIED FOR SEARCH)
+if ($search != '') {
+    $stmt = $pdo->prepare("SELECT * FROM students 
+                           WHERE name LIKE ? 
+                           OR email LIKE ? 
+                           OR course LIKE ?");
+    $stmt->execute(["%$search%", "%$search%", "%$search%"]);
+} else {
+    $stmt = $pdo->query("SELECT * FROM students");
+}
+
 $students = $stmt->fetchAll();
 ?>
+
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -95,6 +111,7 @@ $students = $stmt->fetchAll();
         color: white;
     }
 </style>
+
 <div class="container">
     <div class="form-card">
         <h2>➕ Add Student</h2>
@@ -105,7 +122,16 @@ $students = $stmt->fetchAll();
             <button type="submit">Save Student</button>
         </form>
     </div>
+
     <h2>📋 Student List</h2>
+
+    <!-- 🔍 SEARCH BAR (ADDED) -->
+    <form method="GET" style="margin-bottom: 15px;">
+        <input type="text" name="search" placeholder="Search..."
+               value="<?php echo htmlspecialchars($search); ?>">
+        <button type="submit">Search</button>
+    </form>
+
     <table>
         <tr>
             <th>Name</th>
@@ -113,6 +139,7 @@ $students = $stmt->fetchAll();
             <th>Course</th>
             <th>Action</th>
         </tr>
+
         <?php foreach ($students as $student): ?>
         <tr>
             <td><?= htmlspecialchars($student['name']) ?></td>
@@ -127,5 +154,12 @@ $students = $stmt->fetchAll();
             </td>
         </tr>
         <?php endforeach; ?>
+
+        <!-- 🔍 NO RESULTS MESSAGE (ADDED) -->
+        <?php if (count($students) == 0): ?>
+        <tr>
+            <td colspan="4" style="text-align:center;">No results found</td>
+        </tr>
+        <?php endif; ?>
     </table>
 </div>
