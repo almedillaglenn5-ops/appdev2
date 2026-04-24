@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f4f6f9;
+            background: #74a1e5;
             display: flex;
             justify-content: center;
             align-items: center;
